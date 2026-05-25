@@ -1,100 +1,63 @@
 <!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>生豆仕入れ先DB | FLV</title>
-  <style>
-    *{box-sizing:border-box} body{margin:0;background:#09090b;color:#f4f4f5;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-    header{position:sticky;top:0;z-index:10;background:#09090b;border-bottom:1px solid #27272a}
-    .wrap{max-width:1200px;margin:0 auto;padding:12px 16px}.head{display:flex;justify-content:space-between;gap:12px;align-items:center}
-    h1{font-size:24px;margin:0;font-weight:900}.sub{font-size:12px;color:#a1a1aa;margin-top:2px}.count{font-size:12px;color:#a1a1aa;border:1px solid #27272a;border-radius:999px;padding:5px 10px;white-space:nowrap}
-    .filters{background:#18181b;border:1px solid #27272a;border-radius:16px;padding:12px;margin:16px 0;display:grid;grid-template-columns:1fr 150px 150px 180px;gap:8px}
-    input,select,button{background:#09090b;color:#f4f4f5;border:1px solid #27272a;border-radius:10px;padding:9px 10px;font-size:14px}
-    button{cursor:pointer;font-weight:700}.active{background:#f4f4f5;color:#09090b}
-    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}.stat{background:#18181b;border:1px solid #27272a;border-radius:12px;padding:8px;text-align:center}.stat .label{font-size:12px;color:#71717a}.stat .num{font-size:20px;font-weight:900}
-    .table{border:1px solid #27272a;border-radius:16px;overflow:hidden;background:#18181b}.row,.thead{display:grid;grid-template-columns:1.6fr 90px 90px 90px 1.8fr 70px;gap:8px;align-items:center;padding:10px 14px;border-bottom:1px solid #27272a;font-size:14px}
-    .thead{background:#09090b;color:#a1a1aa;font-size:12px;font-weight:800}.row:last-child{border-bottom:none}.row:hover{background:#27272a66}.name{font-weight:800}.note{font-size:13px;color:#a1a1aa;line-height:1.4}.badge{display:inline-block;border-radius:999px;padding:4px 8px;font-size:12px;font-weight:800}.ok{background:#10b98120;color:#6ee7b7}.ng{background:#f43f5e20;color:#fda4af}.unknown{background:#3f3f4620;color:#a1a1aa}.link{display:inline-block;background:#f4f4f5;color:#09090b;text-decoration:none;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:800}
-    @media(max-width:760px){.filters{grid-template-columns:1fr 1fr}.row{grid-template-columns:1fr;gap:6px}.thead{display:none}.stats{grid-template-columns:repeat(3,1fr)}.mobile-meta{display:block;color:#71717a;font-size:12px}.link{width:max-content}}
-    @media(min-width:761px){.mobile-meta{display:none}}
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>生豆仕入れ先DB</title>
+<style>
+body{margin:0;background:#000;color:#fff;font-family:-apple-system,BlinkMacSystemFont,sans-serif}
+header{position:sticky;top:0;background:#000;padding:16px;border-bottom:1px solid #222;z-index:10}
+h1{margin:0;font-size:32px;font-weight:900}
+.sub{color:#888;font-size:13px;margin-top:4px}
+.wrap{padding:12px}
+.card{background:#111;border:1px solid #222;border-radius:18px;padding:14px;margin-bottom:10px}
+.name{font-size:26px;font-weight:900;line-height:1.2;margin-bottom:10px}
+.meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.badge{padding:8px 12px;border-radius:999px;font-size:14px;font-weight:700}
+.ok{background:#0f2f22;color:#7ff0b0}
+.ng{background:#3a1620;color:#ff9fb4}
+.kg{background:#1f1f1f;color:#fff}
+.note{font-size:13px;color:#999;line-height:1.5;margin-bottom:12px}
+.btn{display:block;text-align:center;background:#fff;color:#000;text-decoration:none;padding:14px;border-radius:14px;font-weight:900;font-size:18px}
+.search{width:100%;padding:14px;border-radius:14px;background:#111;border:1px solid #222;color:#fff;font-size:16px;margin-bottom:12px}
+</style>
 </head>
 <body>
-  <header><div class="wrap head"><div><h1>生豆仕入れ先DB</h1><div class="sub">小ロット・個人購入・クロップ記載で比較</div></div><div class="count" id="count"></div></div></header>
-  <main class="wrap">
-    <section class="filters">
-      <input id="q" placeholder="店名で検索">
-      <select id="kg"><option value="all">購入量すべて</option><option value="0.2">0.2kg以下</option><option value="0.3">0.3kg以下</option><option value="0.5">0.5kg以下</option><option value="1">1kg以下</option><option value="5">5kg以下</option></select>
-      <select id="sort"><option value="minKgAsc">少ない順</option><option value="minKgDesc">多い順</option><option value="name">店名順</option></select>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button id="personal">個人可</button><button id="crop">クロップ有</button></div>
-    </section>
-    <section class="stats">
-      <div class="stat"><div class="label">個人購入可</div><div class="num" id="personalCount"></div></div>
-      <div class="stat"><div class="label">クロップ記載</div><div class="num" id="cropCount"></div></div>
-      <div class="stat"><div class="label">0.5kg以下</div><div class="num" id="smallCount"></div></div>
-    </section>
-    <section class="table">
-      <div class="thead"><div>店名</div><div>最低量</div><div>クロップ</div><div>個人</div><div>備考</div><div>リンク</div></div>
-      <div id="rows"></div>
-    </section>
-  </main>
+<header>
+<h1>生豆仕入れ先DB</h1>
+<div class="sub">スマホ用シンプル版</div>
+</header>
+
+<div class="wrap">
+<input id="search" class="search" placeholder="店名検索">
+
+<div id="list"></div>
+</div>
+
 <script>
-const suppliers = [
-  { name: "マドゥーラ", url: "https://madura.co.jp/", minKg: 1, crop: "◯", personal: "◯", note: "最低注文金額は6,480円(税込)で送料無料" },
-  { name: "Mirai Seeds", url: "https://mirai-seeds.jp/", minKg: 10, crop: "◯", personal: "✕", note: "" },
-  { name: "DAWIT COFFEE SHOP", url: "https://selamstore.theshop.jp/", minKg: 0.3, crop: "◯", personal: "◯", note: "" },
-  { name: "ORIGIN COUNTRIES for Small Batch Coffee", url: "https://shop.origincountries.com/", minKg: 0.3, crop: "◯", personal: "◯", note: "" },
-  { name: "MOUNTAIN MOVER", url: "https://store.mmcoffee.co.jp/collections/geenbeans", minKg: 0.3, crop: "◯", personal: "◯", note: "" },
-  { name: "海の向こうコーヒー", url: "https://uminomukou.bcart.jp/", minKg: 0.2, crop: "◯", personal: "◯", note: "" },
-  { name: "まだゆめのつづき", url: "https://www.mvcoffee.net/?mode=cate&cbid=1895394&csid=0", minKg: 0.5, crop: "◯", personal: "◯", note: "" },
-  { name: "生豆本舗", url: "https://www.namamame.jp/index.php?main_page=index", minKg: 0.1, crop: "◯", personal: "◯", note: "" },
-  { name: "ワイルド珈琲", url: "https://www.wild-coffee-store.com/", minKg: 0.5, crop: "◯", personal: "◯", note: "" },
-  { name: "生豆 | 三本珈琲オンラインショップ", url: "https://www.mitsumoto-eshop.jp/shopbrand/rawbeans/", minKg: 1, crop: "✕", personal: "◯", note: "" },
-  { name: "松屋珈琲 @ Amazon.co.jp", url: "https://amzn.to/4a1DHUj", minKg: 1, crop: "✕", personal: "◯", note: "" },
-  { name: "MITSUMOTO COFFEE 公式ショップ", url: "https://amzn.to/3RG77RG", minKg: 1, crop: "✕", personal: "◯", note: "" },
-  { name: "ガルテンビコーヒー", url: "https://galitebecoffee.com/", minKg: 1, crop: "◯", personal: "◯", note: "メンバーシップ登録料15,000円" },
-  { name: "E.C.H", url: "https://ethiobunahouse.i15.bcart.jp/", minKg: 0.3, crop: "◯", personal: "✕", note: "個人でのご利用の方、または一定以上の規模の事業として行っていない方はご登録いただけません。" },
-  { name: "ILMIIO ROASTERY Lab.", url: "https://ilmiioroastery.com/", minKg: 0.2, crop: "✕", personal: "◯", note: "" },
-  { name: "たかおマーケット", url: "https://hb.afl.rakuten.co.jp/hgc/542503b8.90b50229.542503b9.4141ed5c/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Ftakaocoffee%2Fc%2F0000000128%2F&link_type=hybrid_url&ut=eyJwYWdlIjoidXJsIiwidHlwZSI6Imh5YnJpZF91cmwiLCJjb2wiOjF9", minKg: 0.5, crop: "◯", personal: "◯", note: "" },
-  { name: "ユーエスフーズ株式会社", url: "https://usfoods.co.jp/", minKg: 5, crop: "◯", personal: "✕", note: "業務用焙煎機をお持ちの方、またはご発注済の方のみ登録可" },
-  { name: "Coffee Network", url: "https://www.coffee-network.jp/", minKg: 24.2, crop: "◯", personal: "✕", note: "" },
-  { name: "NoBlendCoffee", url: "https://www.noblendcoffee.com/", minKg: 0.9, crop: "✕", personal: "◯", note: "" },
-  { name: "丸山珈琲", url: "https://green.maruyamacoffee.com/", minKg: null, crop: "-", personal: "-", note: "現在、新規会員登録の受付を一時停止" },
-  { name: "ORIGIN COUNTRIES", url: "https://order.origincountries.com/", minKg: null, crop: "-", personal: "-", note: "個人、または一定以上の規模の事業でない方は登録不可" },
-  { name: "天迦久珈琲", url: "https://amenokakucoffee.com/", minKg: 0.1, crop: "✕", personal: "◯", note: "" },
-  { name: "The Coffee Market", url: "https://coffee-market.stores.jp/", minKg: 0.5, crop: "✕", personal: "◯", note: "" },
-  { name: "GREEN COFFEE STORE", url: "https://greencoffee-dcs.shop-pro.jp/", minKg: 1, crop: "◯", personal: "◯", note: "" },
-  { name: "TYPICA（ティピカ ）", url: "https://typica.coffee/ja/", minKg: 30, crop: "◯", personal: "◯", note: "" },
-  { name: "松屋珈琲", url: "https://matsuyacoffee.shop-pro.jp/", minKg: 0.2, crop: "✕", personal: "◯", note: "" },
-  { name: "小川珈琲", url: "https://ogawa-pro.jp/", minKg: 5, crop: "✕", personal: "✕", note: "" },
-  { name: "サザコーヒーオンラインショップ", url: "https://saza.coffee/Form/Product/ProductList.aspx?&cat=080&srsltid=AfmBOopHBVmPZ_RZJE2nfkAs_xuwBIuvIXH8Hh80UjXKYsdpC-OM-SAQ", minKg: 0.23, crop: "✕", personal: "◯", note: "" },
-  { name: "ダイニチWebShop", url: "https://webshop.dainichi-net.co.jp/c/gr135/gr138?sort=price_low", minKg: 0.3, crop: "✕", personal: "◯", note: "" },
-  { name: "ワールドビーンズショップ", url: "https://worldbeans-shop.com/", minKg: 0.2, crop: "✕", personal: "◯", note: "" },
-  { name: "コーヒー流通センター", url: "https://www.coffee-rc.jp/", minKg: 10, crop: "✕", personal: "✕", note: "" },
-  { name: "ワールド珈琲商会", url: "https://www.coffee-w.co.jp/index.shtml", minKg: 10, crop: "◯", personal: "◯", note: "" },
-  { name: "キャラバンコーヒー", url: "https://www.greenbean.caravan-coffee.jp/index.html", minKg: 5, crop: "✕", personal: "✕", note: "" },
-  { name: "一宮物産", url: "https://www.iritateya.co.jp/", minKg: 0.1, crop: "✕", personal: "◯", note: "" },
-  { name: "ワタルコーヒー", url: "https://www.specialty-coffee.jp/", minKg: 5, crop: "✕", personal: "✕", note: "" },
-  { name: "珈琲問屋", url: "https://www.tonya.co.jp/shop/", minKg: 0.1, crop: "✕", personal: "◯", note: "" },
-  { name: "NICARAGUA COFFEE M＆C Co.,Ltd", url: "https://www.shop-nicaraguacoffee.com/index.html", minKg: 5, crop: "◯", personal: "◯", note: "" },
-  { name: "BRISA & TIERRA", url: "https://www.brisatrade.com//ja", minKg: null, crop: "-", personal: "✕", note: "パナマ専門店。購入は問い合わせから" },
-  { name: "nordicjapan", url: "https://nordicjapan.stores.jp/?category_id=63e507ba3313d22eb830801b", minKg: 10, crop: "◯", personal: "◯", note: "" },
+const data = [
+{name:"ワイルド珈琲",kg:"0.5kg〜",crop:true,personal:true,url:"https://www.wild-coffee-store.com/"},
+{name:"たかおマーケット",kg:"0.5kg〜",crop:true,personal:true,url:"https://item.rakuten.co.jp/takaocoffee/"},
+{name:"The Coffee Market",kg:"0.5kg〜",crop:false,personal:true,url:"https://coffee-market.stores.jp/"},
+{name:"NoBlendCoffee",kg:"0.9kg〜",crop:false,personal:true,url:"https://www.noblendcoffee.com/"},
+{name:"海の向こうコーヒー",kg:"0.2kg〜",crop:true,personal:true,url:"https://uminomukou.bcart.jp/"}
 ];
-let personalOnly=false, cropOnly=false;
-function badge(v){ if(v==="◯") return '<span class="badge ok">可</span>'; if(v==="✕") return '<span class="badge ng">不可</span>'; return '<span class="badge unknown">不明</span>'; }
+
 function render(){
-  const q=document.getElementById('q').value.trim().toLowerCase(), kg=document.getElementById('kg').value, sort=document.getElementById('sort').value;
-  let rows=suppliers.filter(s=>(!q||(`${s.name} ${s.note} ${s.url}`).toLowerCase().includes(q))&&(!personalOnly||s.personal==="◯")&&(!cropOnly||s.crop==="◯")&&(kg==="all"||(s.minKg!==null&&s.minKg<=Number(kg))));
-  rows.sort((a,b)=> sort==="minKgAsc"?(a.minKg??9999)-(b.minKg??9999):sort==="minKgDesc"?(b.minKg??-1)-(a.minKg??-1):a.name.localeCompare(b.name,"ja"));
-  document.getElementById('count').textContent=`${rows.length}/${suppliers.length}件`;
-  document.getElementById('personalCount').textContent=suppliers.filter(s=>s.personal==="◯").length;
-  document.getElementById('cropCount').textContent=suppliers.filter(s=>s.crop==="◯").length;
-  document.getElementById('smallCount').textContent=suppliers.filter(s=>s.minKg!==null&&s.minKg<=0.5&&s.personal==="◯").length;
-  document.getElementById('rows').innerHTML=rows.map(s=>`<div class="row"><div class="name">${s.name}<div class="mobile-meta">${s.minKg===null?"最低量：不明":`最低量：${s.minKg}kg〜`}</div></div><div>${s.minKg===null?"不明":s.minKg+"kg"}</div><div>${badge(s.crop)}</div><div>${badge(s.personal)}</div><div class="note">${s.note||"—"}</div><div><a class="link" href="${s.url}" target="_blank" rel="noreferrer">開く</a></div></div>`).join('');
+const q=document.getElementById('search').value.toLowerCase();
+document.getElementById('list').innerHTML=data.filter(x=>x.name.toLowerCase().includes(q)).map(x=>`
+<div class="card">
+<div class="name">${x.name}</div>
+<div class="meta">
+<div class="badge kg">${x.kg}</div>
+<div class="badge ${x.crop?'ok':'ng'}">${x.crop?'クロップ有':'クロップ無'}</div>
+<div class="badge ${x.personal?'ok':'ng'}">${x.personal?'個人可':'個人不可'}</div>
+</div>
+<a class="btn" href="${x.url}" target="_blank">サイトを開く</a>
+</div>
+`).join('');
 }
-['q','kg','sort'].forEach(id=>document.getElementById(id).addEventListener('input',render));
-document.getElementById('personal').onclick=()=>{personalOnly=!personalOnly;document.getElementById('personal').classList.toggle('active',personalOnly);render();}
-document.getElementById('crop').onclick=()=>{cropOnly=!cropOnly;document.getElementById('crop').classList.toggle('active',cropOnly);render();}
+document.getElementById('search').addEventListener('input',render);
 render();
 </script>
 </body>
