@@ -1,64 +1,571 @@
 <!doctype html>
 <html lang="ja">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>生豆仕入れ先DB</title>
-<style>
-body{margin:0;background:#000;color:#fff;font-family:-apple-system,BlinkMacSystemFont,sans-serif}
-header{position:sticky;top:0;background:#000;padding:16px;border-bottom:1px solid #222;z-index:10}
-h1{margin:0;font-size:32px;font-weight:900}
-.sub{color:#888;font-size:13px;margin-top:4px}
-.wrap{padding:12px}
-.card{background:#111;border:1px solid #222;border-radius:18px;padding:14px;margin-bottom:10px}
-.name{font-size:26px;font-weight:900;line-height:1.2;margin-bottom:10px}
-.meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
-.badge{padding:8px 12px;border-radius:999px;font-size:14px;font-weight:700}
-.ok{background:#0f2f22;color:#7ff0b0}
-.ng{background:#3a1620;color:#ff9fb4}
-.kg{background:#1f1f1f;color:#fff}
-.note{font-size:13px;color:#999;line-height:1.5;margin-bottom:12px}
-.btn{display:block;text-align:center;background:#fff;color:#000;text-decoration:none;padding:14px;border-radius:14px;font-weight:900;font-size:18px}
-.search{width:100%;padding:14px;border-radius:14px;background:#111;border:1px solid #222;color:#fff;font-size:16px;margin-bottom:12px}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>生豆ショップ比較</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f4ee;
+      --panel: #fffdf8;
+      --ink: #1f2423;
+      --muted: #64706d;
+      --line: #ddd6ca;
+      --accent: #0f766e;
+      --accent-strong: #115e59;
+      --good-bg: #e8f5ef;
+      --good: #14704f;
+      --bad-bg: #f7e7e0;
+      --bad: #a13f25;
+      --unknown-bg: #ece8df;
+      --unknown: #6c6257;
+      --shadow: 0 16px 40px rgba(44, 36, 25, 0.09);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Yu Gothic", "Hiragino Kaku Gothic ProN", Meiryo, system-ui, sans-serif;
+      line-height: 1.5;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    .app {
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    .shell {
+      width: min(1180px, 100%);
+      margin: 0 auto;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: end;
+      padding: 8px 0 18px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 46px);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .lead {
+      margin: 10px 0 0;
+      color: var(--muted);
+      max-width: 680px;
+      font-size: 15px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 112px);
+      gap: 8px;
+    }
+
+    .stat {
+      min-height: 74px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      padding: 10px 12px;
+      box-shadow: var(--shadow);
+    }
+
+    .stat b {
+      display: block;
+      font-size: 24px;
+      line-height: 1.1;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) repeat(3, minmax(150px, 190px));
+      gap: 10px;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      padding: 12px 0;
+      background: color-mix(in srgb, var(--bg) 90%, transparent);
+      backdrop-filter: blur(10px);
+    }
+
+    .field,
+    .select {
+      width: 100%;
+      height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      color: var(--ink);
+      padding: 0 12px;
+      outline: none;
+    }
+
+    .field:focus,
+    .select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.15);
+    }
+
+    .view {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 13px 14px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: middle;
+      font-size: 14px;
+    }
+
+    th {
+      background: #eee7db;
+      color: #3d4542;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    tbody tr:hover {
+      background: #fbf4e8;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .shop {
+      min-width: 210px;
+      font-weight: 700;
+    }
+
+    .url-cell a {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      max-width: 340px;
+      color: var(--accent-strong);
+      text-decoration: none;
+    }
+
+    .url-cell a:hover {
+      text-decoration: underline;
+    }
+
+    .url-cell span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .url-cell svg {
+      flex: 0 0 auto;
+      width: 1em;
+      height: 1em;
+    }
+
+    .kg {
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 44px;
+      height: 28px;
+      border-radius: 999px;
+      padding: 0 10px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .yes {
+      background: var(--good-bg);
+      color: var(--good);
+    }
+
+    .no {
+      background: var(--bad-bg);
+      color: var(--bad);
+    }
+
+    .unknown {
+      background: var(--unknown-bg);
+      color: var(--unknown);
+    }
+
+    .cards {
+      display: none;
+      gap: 10px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      padding: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .card-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .card h2 {
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.35;
+      letter-spacing: 0;
+    }
+
+    .visit {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      color: var(--accent-strong);
+      text-decoration: none;
+      background: #f9f6ee;
+    }
+
+    .visit svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 13px;
+    }
+
+    .metric {
+      min-height: 70px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 9px;
+      background: #faf7f1;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      margin-bottom: 6px;
+    }
+
+    .empty {
+      display: none;
+      padding: 46px 18px;
+      text-align: center;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .count {
+      color: var(--muted);
+      font-size: 13px;
+      padding: 8px 2px 12px;
+    }
+
+    @media (max-width: 860px) {
+      .app {
+        padding: 18px 14px;
+      }
+
+      header {
+        grid-template-columns: 1fr;
+      }
+
+      .stats {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .toolbar {
+        position: static;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .toolbar .search {
+        grid-column: 1 / -1;
+      }
+
+      .view {
+        display: none;
+      }
+
+      .cards {
+        display: grid;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .app {
+        padding: 14px 10px;
+      }
+
+      .toolbar {
+        grid-template-columns: 1fr;
+      }
+
+      .stats {
+        grid-template-columns: 1fr;
+      }
+
+      .stat {
+        min-height: 58px;
+      }
+
+      .meta {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
 <body>
-<header>
-<h1>生豆仕入れ先DB</h1>
-<div class="sub">スマホ用シンプル版</div>
-</header>
+  <main class="app">
+    <div class="shell">
+      <header>
+        <div>
+          <h1>生豆ショップ比較</h1>
+          <p class="lead">最低購入量、クロップ記載、個人購入可否で見比べるための一覧。</p>
+        </div>
+        <div class="stats" aria-label="集計">
+          <div class="stat"><b id="statTotal">0</b><span>掲載店</span></div>
+          <div class="stat"><b id="statPersonal">0</b><span>個人購入可</span></div>
+          <div class="stat"><b id="statSmall">0</b><span>1kg未満可</span></div>
+        </div>
+      </header>
 
-<div class="wrap">
-<input id="search" class="search" placeholder="店名検索">
+      <section class="toolbar" aria-label="絞り込み">
+        <input class="field search" id="search" type="search" placeholder="店名・URLで検索">
+        <select class="select" id="maxKg" aria-label="最低購入量">
+          <option value="all">購入量すべて</option>
+          <option value="0.3">0.3kg以下</option>
+          <option value="0.5">0.5kg以下</option>
+          <option value="1">1kg以下</option>
+          <option value="5">5kg以下</option>
+        </select>
+        <select class="select" id="crop" aria-label="クロップ記載">
+          <option value="all">クロップすべて</option>
+          <option value="yes">記載あり</option>
+          <option value="no">記載なし</option>
+          <option value="unknown">不明</option>
+        </select>
+        <select class="select" id="personal" aria-label="個人購入">
+          <option value="all">個人購入すべて</option>
+          <option value="yes">購入可</option>
+          <option value="no">購入不可</option>
+          <option value="unknown">不明</option>
+        </select>
+      </section>
 
-<div id="list"></div>
-</div>
+      <div class="count" id="count"></div>
 
-<script>
-const data = [
-{name:"ワイルド珈琲",kg:"0.5kg〜",crop:true,personal:true,url:"https://www.wild-coffee-store.com/"},
-{name:"たかおマーケット",kg:"0.5kg〜",crop:true,personal:true,url:"https://item.rakuten.co.jp/takaocoffee/"},
-{name:"The Coffee Market",kg:"0.5kg〜",crop:false,personal:true,url:"https://coffee-market.stores.jp/"},
-{name:"NoBlendCoffee",kg:"0.9kg〜",crop:false,personal:true,url:"https://www.noblendcoffee.com/"},
-{name:"海の向こうコーヒー",kg:"0.2kg〜",crop:true,personal:true,url:"https://uminomukou.bcart.jp/"}
-];
+      <section class="view" aria-label="店舗一覧">
+        <table>
+          <thead>
+            <tr>
+              <th>店名</th>
+              <th>URL</th>
+              <th>最低購入量</th>
+              <th>クロップ記載</th>
+              <th>個人購入</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </section>
 
-function render(){
-const q=document.getElementById('search').value.toLowerCase();
-document.getElementById('list').innerHTML=data.filter(x=>x.name.toLowerCase().includes(q)).map(x=>`
-<div class="card">
-<div class="name">${x.name}</div>
-<div class="meta">
-<div class="badge kg">${x.kg}</div>
-<div class="badge ${x.crop?'ok':'ng'}">${x.crop?'クロップ有':'クロップ無'}</div>
-<div class="badge ${x.personal?'ok':'ng'}">${x.personal?'個人可':'個人不可'}</div>
-</div>
-<a class="btn" href="${x.url}" target="_blank">サイトを開く</a>
-</div>
-`).join('');
-}
-document.getElementById('search').addEventListener('input',render);
-render();
-</script>
+      <section class="cards" id="cards" aria-label="店舗カード"></section>
+      <section class="empty" id="empty">該当するショップがありません。</section>
+    </div>
+  </main>
+
+  <script>
+    const shops = [
+      { name: "マドゥーラ", url: "https://madura.co.jp/", kg: 1, crop: "yes", personal: "yes" },
+      { name: "Mirai Seeds", url: "https://mirai-seeds.jp/", kg: 10, crop: "yes", personal: "no" },
+      { name: "DAWIT COFFEE SHOP", url: "https://selamstore.theshop.jp/", kg: 0.3, crop: "yes", personal: "yes" },
+      { name: "ORIGIN COUNTRIES for Small Batch Coffee", url: "https://shop.origincountries.com/", kg: 0.3, crop: "yes", personal: "yes" },
+      { name: "MOUNTAIN MOVER", url: "https://store.mmcoffee.co.jp/collections/geenbeans", kg: 0.3, crop: "yes", personal: "yes" },
+      { name: "海の向こうコーヒー", url: "https://uminomukou.bcart.jp/", kg: 0.2, crop: "yes", personal: "yes" },
+      { name: "まだゆめのつづき", url: "https://www.mvcoffee.net/?mode=cate&cbid=1895394&csid=0", kg: 0.5, crop: "yes", personal: "yes" },
+      { name: "生豆本舗", url: "https://www.namamame.jp/index.php?main_page=index", kg: 0.1, crop: "yes", personal: "yes" },
+      { name: "ワイルド珈琲", url: "https://www.wild-coffee-store.com/", kg: 0.5, crop: "yes", personal: "yes" },
+      { name: "生豆 | 三本珈琲オンラインショップ", url: "https://www.mitsumoto-eshop.jp/shopbrand/rawbeans/", kg: 1, crop: "no", personal: "yes" },
+      { name: "松屋珈琲 @ Amazon.co.jp", url: "https://amzn.to/4a1DHUj", kg: 1, crop: "no", personal: "yes" },
+      { name: "MITSUMOTO COFFEE 公式ショップ", url: "https://amzn.to/3RG77RG", kg: 1, crop: "no", personal: "yes" },
+      { name: "ガルテンビコーヒー", url: "https://galitebecoffee.com/", kg: 1, crop: "yes", personal: "yes" },
+      { name: "E.C.H", url: "https://ethiobunahouse.i15.bcart.jp/", kg: 0.3, crop: "yes", personal: "no" },
+      { name: "ILMIIO ROASTERY Lab.", url: "https://ilmiioroastery.com/", kg: 0.2, crop: "no", personal: "yes" },
+      { name: "たかおマーケット", url: "https://hb.afl.rakuten.co.jp/hgc/542503b8.90b50229.542503b9.4141ed5c/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Ftakaocoffee%2Fc%2F0000000128%2F&link_type=hybrid_url&ut=eyJwYWdlIjoidXJsIiwidHlwZSI6Imh5YnJpZF91cmwiLCJjb2wiOjF9", kg: 0.5, crop: "yes", personal: "yes" },
+      { name: "ユーエスフーズ株式会社", url: "https://usfoods.co.jp/", kg: 5, crop: "yes", personal: "no" },
+      { name: "Coffee Network", url: "https://www.coffee-network.jp/", kg: 24.2, crop: "yes", personal: "no" },
+      { name: "NoBlendCoffee", url: "https://www.noblendcoffee.com/", kg: 0.9, crop: "no", personal: "yes" },
+      { name: "丸山珈琲", url: "https://green.maruyamacoffee.com/", kg: null, crop: "unknown", personal: "unknown" },
+      { name: "ORIGIN COUNTRIES", url: "https://order.origincountries.com/", kg: null, crop: "unknown", personal: "unknown" },
+      { name: "天迦久珈琲", url: "https://amenokakucoffee.com/", kg: 0.1, crop: "no", personal: "yes" },
+      { name: "The Coffee Market", url: "https://coffee-market.stores.jp/", kg: 0.5, crop: "no", personal: "yes" },
+      { name: "GREEN COFFEE STORE", url: "https://greencoffee-dcs.shop-pro.jp/", kg: 1, crop: "yes", personal: "yes" },
+      { name: "TYPICA（ティピカ）", url: "https://typica.coffee/ja/", kg: 30, crop: "yes", personal: "yes" },
+      { name: "松屋珈琲", url: "https://matsuyacoffee.shop-pro.jp/", kg: 0.2, crop: "no", personal: "yes" },
+      { name: "小川珈琲", url: "https://ogawa-pro.jp/", kg: 5, crop: "no", personal: "no" },
+      { name: "サザコーヒーオンラインショップ", url: "https://saza.coffee/Form/Product/ProductList.aspx?&cat=080&srsltid=AfmBOopHBVmPZ_RZJE2nfkAs_xuwBIuvIXH8Hh80UjXKYsdpC-OM-SAQ", kg: 0.23, crop: "no", personal: "yes" },
+      { name: "ダイニチWebShop", url: "https://webshop.dainichi-net.co.jp/c/gr135/gr138?sort=price_low", kg: 0.3, crop: "no", personal: "yes" },
+      { name: "ワールドビーンズショップ", url: "https://worldbeans-shop.com/", kg: 0.2, crop: "no", personal: "yes" },
+      { name: "コーヒー流通センター", url: "https://www.coffee-rc.jp/", kg: 10, crop: "no", personal: "no" },
+      { name: "ワールド珈琲商会", url: "https://www.coffee-w.co.jp/index.shtml", kg: 10, crop: "yes", personal: "yes" },
+      { name: "キャラバンコーヒー", url: "https://www.greenbean.caravan-coffee.jp/index.html", kg: 5, crop: "no", personal: "no" },
+      { name: "一宮物産", url: "https://www.iritateya.co.jp/", kg: 0.1, crop: "no", personal: "yes" },
+      { name: "ワタルコーヒー", url: "https://www.specialty-coffee.jp/", kg: 5, crop: "no", personal: "no" },
+      { name: "珈琲問屋", url: "https://www.tonya.co.jp/shop/", kg: 0.1, crop: "no", personal: "yes" },
+      { name: "NICARAGUA COFFEE M＆C Co.,Ltd", url: "https://www.shop-nicaraguacoffee.com/index.html", kg: 5, crop: "yes", personal: "yes" },
+      { name: "BRISA & TIERRA", url: "https://www.brisatrade.com//ja", kg: null, crop: "unknown", personal: "no" },
+      { name: "nordicjapan", url: "https://nordicjapan.stores.jp/?category_id=63e507ba3313d22eb830801b", kg: 10, crop: "yes", personal: "yes" }
+    ];
+
+    const label = {
+      yes: "◯",
+      no: "×",
+      unknown: "-"
+    };
+
+    const textLabel = {
+      yes: "あり",
+      no: "なし",
+      unknown: "不明"
+    };
+
+    const rows = document.querySelector("#rows");
+    const cards = document.querySelector("#cards");
+    const empty = document.querySelector("#empty");
+    const count = document.querySelector("#count");
+    const search = document.querySelector("#search");
+    const maxKg = document.querySelector("#maxKg");
+    const crop = document.querySelector("#crop");
+    const personal = document.querySelector("#personal");
+
+    function kgLabel(value) {
+      return value === null ? "-" : `${value}kg`;
+    }
+
+    function badge(value, mode = "symbol") {
+      const content = mode === "text" ? textLabel[value] : label[value];
+      return `<span class="badge ${value}">${content}</span>`;
+    }
+
+    function externalIcon() {
+      return `<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"></path></svg>`;
+    }
+
+    function render() {
+      const query = search.value.trim().toLowerCase();
+      const kgLimit = maxKg.value === "all" ? null : Number(maxKg.value);
+      const cropValue = crop.value;
+      const personalValue = personal.value;
+
+      const filtered = shops.filter((shop) => {
+        const matchesQuery = !query || `${shop.name} ${shop.url}`.toLowerCase().includes(query);
+        const matchesKg = kgLimit === null || (shop.kg !== null && shop.kg <= kgLimit);
+        const matchesCrop = cropValue === "all" || shop.crop === cropValue;
+        const matchesPersonal = personalValue === "all" || shop.personal === personalValue;
+        return matchesQuery && matchesKg && matchesCrop && matchesPersonal;
+      }).sort((a, b) => {
+        const akg = a.kg === null ? Number.POSITIVE_INFINITY : a.kg;
+        const bkg = b.kg === null ? Number.POSITIVE_INFINITY : b.kg;
+        return akg - bkg || a.name.localeCompare(b.name, "ja");
+      });
+
+      rows.innerHTML = filtered.map((shop) => `
+        <tr>
+          <td class="shop">${shop.name}</td>
+          <td class="url-cell"><a href="${shop.url}" target="_blank" rel="noopener"><span>${shop.url}</span>${externalIcon()}</a></td>
+          <td class="kg">${kgLabel(shop.kg)}</td>
+          <td>${badge(shop.crop)}</td>
+          <td>${badge(shop.personal)}</td>
+        </tr>
+      `).join("");
+
+      cards.innerHTML = filtered.map((shop) => `
+        <article class="card">
+          <div class="card-head">
+            <h2>${shop.name}</h2>
+            <a class="visit" href="${shop.url}" target="_blank" rel="noopener" aria-label="${shop.name}を開く">${externalIcon()}</a>
+          </div>
+          <div class="meta">
+            <div class="metric"><span>最低購入量</span><strong>${kgLabel(shop.kg)}</strong></div>
+            <div class="metric"><span>クロップ記載</span>${badge(shop.crop, "text")}</div>
+            <div class="metric"><span>個人購入</span>${badge(shop.personal, "text")}</div>
+          </div>
+        </article>
+      `).join("");
+
+      count.textContent = `${filtered.length} / ${shops.length}件`;
+      empty.style.display = filtered.length ? "none" : "block";
+    }
+
+    document.querySelector("#statTotal").textContent = shops.length;
+    document.querySelector("#statPersonal").textContent = shops.filter((shop) => shop.personal === "yes").length;
+    document.querySelector("#statSmall").textContent = shops.filter((shop) => shop.kg !== null && shop.kg < 1).length;
+
+    [search, maxKg, crop, personal].forEach((element) => {
+      element.addEventListener("input", render);
+    });
+
+    render();
+  </script>
 </body>
 </html>
